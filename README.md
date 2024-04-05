@@ -11,6 +11,7 @@ The source code is being organized and will be available soon.
 
 # Reference
 Sato. Word Tour: One-dimensional Word Embeddings via the Traveling Salesman Problem. NAACL. 2022.
+
 Yamagiwa et al. Discovering Universal Geometry in Embeddings with ICA. EMNLP. 2023.
 
 # Citation
