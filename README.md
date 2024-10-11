@@ -104,7 +104,7 @@ tar xvfz LKH-3.0.6.tgz
 ```
 
 ### word-embeddings-benchmarks
-We have modified the repository `word-embeddings-benchmarks` [5]. To install it, use the following commands:
+We have modified the repository [word-embeddings-benchmarks](https://github.com/kudkudak/word-embeddings-benchmarks) [5]. To install it, use the following commands:
 ```bash
 cd word-embeddings-benchmarks
 pip install -e .
