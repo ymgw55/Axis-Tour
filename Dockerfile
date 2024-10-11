@@ -16,15 +16,15 @@ RUN apt-get update && apt-get install -y \
 # Copy files from host to the image.
 COPY requirements.txt /tmp/requirements.txt
 
-# Install python package, remove copied file and cache.
+# Upgrade pip and install Python packages from requirements.txt.
 RUN pip install --upgrade pip && \
     pip install -r /tmp/requirements.txt
 
-# settings
+# Set the language settings.
 ENV LANG C.UTF-8
 ENV LANGUAGE en_US
 
-# Create the user
+# Create the user.
 ARG USERNAME
 ARG USER_UID
 ARG USER_GID
