@@ -22,13 +22,13 @@ Please create a Docker image as follows:
 bash script/docker_build.sh
 ```
 
-### Environment Variables
+### Environment variables
 
 ```bash
-# set OPENAI API key
+# Set OPENAI API key
 export OPENAI_API_KEY="sk-***"
 
-# set DOCKER_HOME to your desired home directory in the container
+# Set the DOCKER_HOME to specify the path of the directory to be mounted as the home directory inside the Docker container
 export DOCKER_HOME="path/to/your/docker_home"
 ```
 
