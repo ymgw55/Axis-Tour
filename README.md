@@ -252,21 +252,22 @@ python make_relation_skewness_and_two_cossims.py --emb_type glove --topk 100
 
 If you find our code or model useful in your research, please cite our paper:
 ```
-@article{DBLP:journals/corr/abs-2401-06112,
-  author       = {Hiroaki Yamagiwa and
-                  Yusuke Takase and
-                  Hidetoshi Shimodaira},
-  title        = {Axis Tour: Word Tour Determines the Order of Axes in ICA-transformed Embeddings},
-  journal      = {CoRR},
-  volume       = {abs/2401.06112},
-  year         = {2024},
-  url          = {https://doi.org/10.48550/arXiv.2401.06112},
-  doi          = {10.48550/ARXIV.2401.06112},
-  eprinttype   = {arXiv},
-  eprint       = {2401.06112},
-  timestamp    = {Sun, 06 Oct 2024 21:24:36 +0200},
-  biburl       = {https://dblp.org/rec/journals/corr/abs-2401-06112.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
+@inproceedings{yamagiwa-etal-2024-axis,
+    title = "Axis Tour: Word Tour Determines the Order of Axes in {ICA}-transformed Embeddings",
+    author = "Yamagiwa, Hiroaki  and
+      Takase, Yusuke  and
+      Shimodaira, Hidetoshi",
+    editor = "Al-Onaizan, Yaser  and
+      Bansal, Mohit  and
+      Chen, Yun-Nung",
+    booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2024",
+    month = nov,
+    year = "2024",
+    address = "Miami, Florida, USA",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.findings-emnlp.28",
+    pages = "477--506",
+    abstract = "Word embedding is one of the most important components in natural language processing, but interpreting high-dimensional embeddings remains a challenging problem. To address this problem, Independent Component Analysis (ICA) is identified as an effective solution. ICA-transformed word embeddings reveal interpretable semantic axes; however, the order of these axes are arbitrary. In this study, we focus on this property and propose a novel method, Axis Tour, which optimizes the order of the axes. Inspired by Word Tour, a one-dimensional word embedding method, we aim to improve the clarity of the word embedding space by maximizing the semantic continuity of the axes. Furthermore, we show through experiments on downstream tasks that Axis Tour yields better or comparable low-dimensional embeddings compared to both PCA and ICA.",
 }
 ```
 
