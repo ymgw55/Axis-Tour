@@ -21,8 +21,8 @@ RUN pip install --upgrade pip && \
     pip install -r /tmp/requirements.txt
 
 # Set the language settings.
-ENV LANG C.UTF-8
-ENV LANGUAGE en_US
+ENV LANG=C.UTF-8
+ENV LANGUAGE=en_US
 
 # Create the user.
 ARG USERNAME
@@ -34,6 +34,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && apt-get install -y --no-install-recommends sudo \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /home/$USERNAME
 
 WORKDIR /workspace

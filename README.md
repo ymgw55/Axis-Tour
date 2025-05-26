@@ -19,22 +19,15 @@ This repository is intended to be run in a Docker environment. If you are not fa
 Please create a Docker image as follows:
 
 ```bash
-bash script/docker_build.sh
-```
-
-### Environment variables
-
-```bash
-# Set OPENAI API key
-export OPENAI_API_KEY="sk-***"
-
-# Set the DOCKER_HOME to specify the path of the directory to be mounted as the home directory inside the Docker container
-export DOCKER_HOME="path/to/your/docker_home"
+bash scripts/docker/build.sh
 ```
 
 ### Docker run
+
+Run the Docker container:
+
 ```bash
-bash script/docker_run.sh
+bash scripts/docker/run.sh
 ```
 ---
 
