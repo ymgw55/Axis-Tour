@@ -1,5 +1,5 @@
 # This Makefile is originally from the "wordtour" project by joisino under the MIT License.
-# See LICENSE-wordtour for the full license text.
+# See third_party_licenses/wordtour-LICENSE for the full license text.
 # No modifications made to this file.
 
 compile_cpp: make_LKH_file.cpp

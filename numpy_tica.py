@@ -1,3 +1,7 @@
+# Portions of this file are adapted from scikit-learn (sklearn/decomposition/_fastica.py).
+# Copyright (c) 2007-2024 The scikit-learn developers. BSD 3-Clause License.
+# See third_party_licenses/scikit-learn-LICENSE.
+
 import warnings
 from numbers import Integral, Real
 

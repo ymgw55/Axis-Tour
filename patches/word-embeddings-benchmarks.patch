@@ -1,0 +1,595 @@
+diff --git a/scripts/evaluate_on_all.py b/scripts/evaluate_on_all.py
+index 766bd31..f08abab 100755
+--- a/scripts/evaluate_on_all.py
++++ b/scripts/evaluate_on_all.py
+@@ -1,20 +1,21 @@
+ #!/usr/bin/env python
+ # -*- coding: utf-8 -*-
+ """
+- This script calculates embedding results against all available fast running
+- benchmarks in the repository and saves results as single row csv table.
++This script calculates embedding results against all available fast running
++benchmarks in the repository and saves results as single row csv table.
+ 
+- Usage: ./evaluate_on_all -f <path to file> -o <path to output file>
++Usage: ./evaluate_on_all -f <path to file> -o <path to output file>
+ 
+- NOTE:
+- * script doesn't evaluate on WordRep (nor its subset) as it is non standard
+- for now and long running (unless some nearest neighbor approximation is used).
++NOTE:
++* script doesn't evaluate on WordRep (nor its subset) as it is non standard
++for now and long running (unless some nearest neighbor approximation is used).
+ 
+- * script is using CosAdd for calculating analogy answer.
++* script is using CosAdd for computing analogy answer.
+ 
+- * script is not reporting results per category (for instance semantic/syntactic) in analogy benchmarks.
+- It is easy to change it by passing category parameter to evaluate_analogy function (see help).
++* script is not reporting results per category (for instance semantic/syntactic) in analogy benchmarks.
++It is easy to change it by passing category parameter to evaluate_analogy function (see help).
+ """
++
+ from optparse import OptionParser
+ import logging
+ import os
+@@ -25,26 +26,42 @@ from web.evaluate import evaluate_on_all
+ 
+ 
+ # Configure logging
+-logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG, datefmt='%I:%M:%S')
++logging.basicConfig(
++    format="%(asctime)s %(levelname)s:%(message)s",
++    level=logging.DEBUG,
++    datefmt="%I:%M:%S",
++)
+ logger = logging.getLogger(__name__)
+ 
+ parser = OptionParser()
+-parser.add_option("-f", "--file", dest="filename",
+-                  help="Path to the file with embedding. If relative will load from data directory.",
+-                  default=None)
+-
+-parser.add_option("-p", "--format", dest="format",
+-                  help="Format of the embedding, possible values are: word2vec, word2vec_bin, dict and glove.",
+-                  default=None)
+-
+-parser.add_option("-o", "--output", dest="output",
+-                  help="Path where to save results.",
+-                  default=None)
+-
+-parser.add_option("-c", "--clean_words", dest="clean_words",
+-                  help="Clean_words argument passed to load_embedding function. If set to True will remove"
+-                       "most of the non-alphanumeric characters, which should speed up evaluation.",
+-                  default=False)
++parser.add_option(
++    "-f",
++    "--file",
++    dest="filename",
++    help="Path to the file with embedding. If relative will load from data directory.",
++    default=None,
++)
++
++parser.add_option(
++    "-p",
++    "--format",
++    dest="format",
++    help="Format of the embedding, possible values are: word2vec, word2vec_bin, dict and glove.",
++    default=None,
++)
++
++parser.add_option(
++    "-o", "--output", dest="output", help="Path where to save results.", default=None
++)
++
++parser.add_option(
++    "-c",
++    "--clean_words",
++    dest="clean_words",
++    help="Clean_words argument passed to load_embedding function. If set to True will remove"
++    "most of the non-alphanumeric characters, which should speed up evaluation.",
++    default=False,
++)
+ 
+ if __name__ == "__main__":
+     (options, args) = parser.parse_args()
+@@ -68,15 +85,26 @@ if __name__ == "__main__":
+             elif ext == ".pkl":
+                 format = "dict"
+ 
+-        assert format in ['word2vec_bin', 'word2vec', 'glove', 'bin'], "Unrecognized format"
++        assert format in [
++            "word2vec_bin",
++            "word2vec",
++            "glove",
++            "bin",
++        ], "Unrecognized format"
+ 
+         load_kwargs = {}
+         if format == "glove":
+-            load_kwargs['vocab_size'] = sum(1 for line in open(fname))
+-            load_kwargs['dim'] = len(next(open(fname)).split()) - 1
+-
+-        w = load_embedding(fname, format=format, normalize=True, lower=True, clean_words=options.clean_words,
+-                           load_kwargs=load_kwargs)
++            load_kwargs["vocab_size"] = sum(1 for line in open(fname))
++            load_kwargs["dim"] = len(next(open(fname)).split()) - 1
++
++        w = load_embedding(
++            fname,
++            format=format,
++            normalize=True,
++            lower=True,
++            clean_words=options.clean_words,
++            load_kwargs=load_kwargs,
++        )
+ 
+     out_fname = options.output if options.output else "results.csv"
+ 
+diff --git a/web/_utils/compat.py b/web/_utils/compat.py
+index 69f5baa..f1d58cf 100644
+--- a/web/_utils/compat.py
++++ b/web/_utils/compat.py
+@@ -8,7 +8,8 @@ import hashlib
+ if sys.version_info[0] == 3:
+     import pickle
+     import io
+-    import urllib
++    # import urllib
++    import urllib.request
+ 
+     _basestring = str
+     cPickle = pickle
+@@ -24,7 +25,8 @@ if sys.version_info[0] == 3:
+ else:
+     import cPickle
+     import StringIO
+-    import urllib
++    # import urllib
++    import urllib.request
+     import urllib2
+     import urlparse
+     import types
+diff --git a/web/analogy.py b/web/analogy.py
+index 5b7b664..f55c53e 100644
+--- a/web/analogy.py
++++ b/web/analogy.py
+@@ -2,6 +2,10 @@
+  Classes and function for answering analogy questions
+ """
+ 
++from web.embedding import Embedding
++from .utils import batched
++from .datasets.analogy import *
++import sklearn
+ import logging
+ from collections import OrderedDict
+ import six
+@@ -11,10 +15,7 @@ import pandas as pd
+ from itertools import product
+ 
+ logger = logging.getLogger(__name__)
+-import sklearn
+-from .datasets.analogy import *
+-from .utils import batched
+-from web.embedding import Embedding
++
+ 
+ class SimpleAnalogySolver(sklearn.base.BaseEstimator):
+     """
+@@ -92,7 +93,8 @@ class SimpleAnalogySolver(sklearn.base.BaseEstimator):
+                 if query_word not in word_id:
+                     missing_words += 1
+         if missing_words > 0:
+-            logger.warning("Missing {} words. Will replace them with mean vector".format(missing_words))
++            logger.warning(
++                "Missing {} words. Will replace them with mean vector".format(missing_words))
+ 
+         # Batch due to memory constaints (in dot operation)
+         for id_batch, batch in enumerate(batched(range(len(X)), self.batch_size)):
+@@ -103,12 +105,14 @@ class SimpleAnalogySolver(sklearn.base.BaseEstimator):
+                                                             int(np.ceil(X.shape[0] / float(self.batch_size)))))
+ 
+             A, B, C = np.vstack(w.get(word, mean_vector) for word in X_b[:, 0]), \
+-                      np.vstack(w.get(word, mean_vector) for word in X_b[:, 1]), \
+-                      np.vstack(w.get(word, mean_vector) for word in X_b[:, 2])
++                np.vstack(w.get(word, mean_vector) for word in X_b[:, 1]), \
++                np.vstack(w.get(word, mean_vector) for word in X_b[:, 2])
+ 
+             if self.method == "add":
+-                D = np.dot(w.vectors, (B - A + C).T)
++                D = np.dot(w.vectors / np.linalg.norm(w.vectors, axis=1, keepdims=True),
++                           ((B - A + C) / np.linalg.norm(B - A + C, axis=1, keepdims=True)).T)
+             elif self.method == "mul":
++                assert False, "mul not supported"
+                 D_A = np.log((1.0 + np.dot(w.vectors, A.T)) / 2.0 + 1e-5)
+                 D_B = np.log((1.0 + np.dot(w.vectors, B.T)) / 2.0 + 1e-5)
+                 D_C = np.log((1.0 + np.dot(w.vectors, C.T)) / 2.0 + 1e-5)
+@@ -123,4 +127,4 @@ class SimpleAnalogySolver(sklearn.base.BaseEstimator):
+ 
+             output.append([words[id] for id in D.argmax(axis=0)])
+ 
+-        return np.array([item for sublist in output for item in sublist])
+\ No newline at end of file
++        return np.array([item for sublist in output for item in sublist])
+diff --git a/web/datasets/analogy.py b/web/datasets/analogy.py
+index e987d94..a1d0b09 100644
+--- a/web/datasets/analogy.py
++++ b/web/datasets/analogy.py
+@@ -11,7 +11,7 @@ import numpy as np
+ 
+ from sklearn.utils import check_random_state
+ 
+-from sklearn.datasets.base import Bunch
++from sklearn.utils import Bunch
+ from .utils import _get_dataset_dir, _fetch_file, _change_list_to_np
+ from ..utils import standardize_string
+ 
+diff --git a/web/datasets/categorization.py b/web/datasets/categorization.py
+index 23d27f0..9335e28 100644
+--- a/web/datasets/categorization.py
++++ b/web/datasets/categorization.py
+@@ -4,7 +4,7 @@
+  Functions for fetching categorization datasets
+ """
+ 
+-from sklearn.datasets.base import Bunch
++from sklearn.utils import Bunch
+ from .utils import _get_cluster_assignments
+ 
+ 
+diff --git a/web/datasets/similarity.py b/web/datasets/similarity.py
+index 93cf4f1..ab5ed08 100644
+--- a/web/datasets/similarity.py
++++ b/web/datasets/similarity.py
+@@ -8,7 +8,7 @@ import os
+ 
+ import numpy as np
+ import pandas as pd
+-from sklearn.datasets.base import Bunch
++from sklearn.utils import Bunch
+ 
+ from .utils import _get_as_pd, _fetch_file
+ 
+diff --git a/web/datasets/utils.py b/web/datasets/utils.py
+index 442afd6..1a1754a 100644
+--- a/web/datasets/utils.py
++++ b/web/datasets/utils.py
+@@ -22,7 +22,7 @@ import zipfile
+ import glob
+ import pandas as pd
+ from tqdm import tqdm
+-from sklearn.datasets.base import Bunch
++from sklearn.utils import Bunch
+ from .._utils.compat import _basestring, cPickle, _urllib, md5_hash
+ 
+ 
+diff --git a/web/evaluate.py b/web/evaluate.py
+index ae985f5..5691eb2 100644
+--- a/web/evaluate.py
++++ b/web/evaluate.py
+@@ -1,19 +1,35 @@
+ # -*- coding: utf-8 -*-
+ """
+- Evaluation functions
++Evaluation functions
+ """
++
+ import logging
+ import numpy as np
+ from sklearn.cluster import AgglomerativeClustering, KMeans
+-from .datasets.similarity import fetch_MEN, fetch_WS353, fetch_SimLex999, fetch_MTurk, fetch_RG65, fetch_RW, fetch_TR9856
+-from .datasets.categorization import fetch_AP, fetch_battig, fetch_BLESS, fetch_ESSLI_1a, fetch_ESSLI_2b, \
+-    fetch_ESSLI_2c
++from .datasets.similarity import (
++    fetch_MEN,
++    fetch_WS353,
++    fetch_SimLex999,
++    fetch_MTurk,
++    fetch_RG65,
++    fetch_RW,
++    fetch_TR9856,
++)
++from .datasets.categorization import (
++    fetch_AP,
++    fetch_battig,
++    fetch_BLESS,
++    fetch_ESSLI_1a,
++    fetch_ESSLI_2b,
++    fetch_ESSLI_2c,
++)
+ from web.analogy import *
+ from six import iteritems
+ from web.embedding import Embedding
+ 
+ logger = logging.getLogger(__name__)
+ 
++
+ def calculate_purity(y_true, y_pred):
+     """
+     Calculate purity for given true and predicted cluster labels.
+@@ -40,7 +56,7 @@ def calculate_purity(y_true, y_pred):
+         pred_clusters[id] = (y_pred == cl).astype("int")
+ 
+     M = pred_clusters.dot(true_clusters.T)
+-    return 1. / len(y_true) * np.sum(np.max(M, axis=1))
++    return 1.0 / len(y_true) * np.sum(np.max(M, axis=1))
+ 
+ 
+ def evaluate_categorization(w, X, y, method="all", seed=None):
+@@ -93,28 +109,45 @@ def evaluate_categorization(w, X, y, method="all", seed=None):
+     best_purity = 0
+ 
+     if method == "all" or method == "agglomerative":
+-        best_purity = calculate_purity(y[ids], AgglomerativeClustering(n_clusters=len(set(y)),
+-                                                                       affinity="euclidean",
+-                                                                       linkage="ward").fit_predict(words[ids]))
+-        logger.debug("Purity={:.3f} using affinity={} linkage={}".format(best_purity, 'euclidean', 'ward'))
++        best_purity = calculate_purity(
++            y[ids],
++            AgglomerativeClustering(
++                n_clusters=len(set(y)), affinity="euclidean", linkage="ward"
++            ).fit_predict(words[ids]),
++        )
++        logger.debug(
++            "Purity={:.3f} using affinity={} linkage={}".format(
++                best_purity, "euclidean", "ward"
++            )
++        )
+         for affinity in ["cosine", "euclidean"]:
+             for linkage in ["average", "complete"]:
+-                purity = calculate_purity(y[ids], AgglomerativeClustering(n_clusters=len(set(y)),
+-                                                                          affinity=affinity,
+-                                                                          linkage=linkage).fit_predict(words[ids]))
+-                logger.debug("Purity={:.3f} using affinity={} linkage={}".format(purity, affinity, linkage))
++                purity = calculate_purity(
++                    y[ids],
++                    AgglomerativeClustering(
++                        n_clusters=len(set(y)), affinity=affinity, linkage=linkage
++                    ).fit_predict(words[ids]),
++                )
++                logger.debug(
++                    "Purity={:.3f} using affinity={} linkage={}".format(
++                        purity, affinity, linkage
++                    )
++                )
+                 best_purity = max(best_purity, purity)
+ 
+     if method == "all" or method == "kmeans":
+-        purity = calculate_purity(y[ids], KMeans(random_state=seed, n_init=10, n_clusters=len(set(y))).
+-                                  fit_predict(words[ids]))
++        purity = calculate_purity(
++            y[ids],
++            KMeans(random_state=seed, n_init=10, n_clusters=len(set(y))).fit_predict(
++                words[ids]
++            ),
++        )
+         logger.debug("Purity={:.3f} using KMeans".format(purity))
+         best_purity = max(purity, best_purity)
+ 
+     return best_purity
+ 
+ 
+-
+ def evaluate_on_semeval_2012_2(w):
+     """
+     Simple method to score embedding using SimpleAnalogySolver
+@@ -140,12 +173,18 @@ def evaluate_on_semeval_2012_2(w):
+     for c in categories:
+         # Get mean of left and right vector
+         prototypes = data.X_prot[c]
+-        prot_left = np.mean(np.vstack(w.get(word, mean_vector) for word in prototypes[:, 0]), axis=0)
+-        prot_right = np.mean(np.vstack(w.get(word, mean_vector) for word in prototypes[:, 1]), axis=0)
++        prot_left = np.mean(
++            np.vstack(w.get(word, mean_vector) for word in prototypes[:, 0]), axis=0
++        )
++        prot_right = np.mean(
++            np.vstack(w.get(word, mean_vector) for word in prototypes[:, 1]), axis=0
++        )
+ 
+         questions = data.X[c]
+-        question_left, question_right = np.vstack(w.get(word, mean_vector) for word in questions[:, 0]), \
+-                                        np.vstack(w.get(word, mean_vector) for word in questions[:, 1])
++        question_left, question_right = (
++            np.vstack(w.get(word, mean_vector) for word in questions[:, 0]),
++            np.vstack(w.get(word, mean_vector) for word in questions[:, 1]),
++        )
+ 
+         scores = np.dot(prot_left - prot_right, (question_left - question_right).T)
+ 
+@@ -156,7 +195,7 @@ def evaluate_on_semeval_2012_2(w):
+         results[c_name].append(0 if np.isnan(cor) else cor)
+ 
+     final_results = OrderedDict()
+-    final_results['all'] = sum(sum(v) for v in results.values()) / len(categories)
++    final_results["all"] = sum(sum(v) for v in results.values()) / len(categories)
+     for k in results:
+         final_results[k] = sum(results[k]) / len(results[k])
+     return pd.Series(final_results)
+@@ -201,7 +240,9 @@ def evaluate_analogy(w, X, y, method="add", k=None, category=None, batch_size=10
+     if isinstance(w, dict):
+         w = Embedding.from_dict(w)
+ 
+-    assert category is None or len(category) == y.shape[0], "Passed incorrect category list"
++    assert (
++        category is None or len(category) == y.shape[0]
++    ), "Passed incorrect category list"
+ 
+     solver = SimpleAnalogySolver(w=w, method=method, batch_size=batch_size, k=k)
+     y_pred = solver.predict(X)
+@@ -215,10 +256,14 @@ def evaluate_analogy(w, X, y, method="add", k=None, category=None, batch_size=10
+             count[cat] = np.sum(category == cat)
+             correct[cat] = np.sum(y_pred[category == cat] == y[category == cat])
+ 
+-        return pd.concat([pd.Series(results, name="accuracy"),
+-                          pd.Series(correct, name="correct"),
+-                          pd.Series(count, name="count")],
+-                         axis=1)
++        return pd.concat(
++            [
++                pd.Series(results, name="accuracy"),
++                pd.Series(correct, name="correct"),
++                pd.Series(count, name="count"),
++            ],
++            axis=1,
++        )
+     else:
+         return np.mean(y_pred == y)
+ 
+@@ -258,8 +303,11 @@ def evaluate_on_WordRep(w, max_pairs=1000, solver_kwargs={}):
+         X_cat = data.X[data.category == cat]
+         X_cat = X_cat[0:max_pairs]
+ 
+-        logger.info("Processing {} with {} pairs, {} questions".format(cat, X_cat.shape[0]
+-                                                                       , X_cat.shape[0] * (X_cat.shape[0] - 1)))
++        logger.info(
++            "Processing {} with {} pairs, {} questions".format(
++                cat, X_cat.shape[0], X_cat.shape[0] * (X_cat.shape[0] - 1)
++            )
++        )
+ 
+         # For each category construct question-answer pairs
+         size = X_cat.shape[0] * (X_cat.shape[0] - 1)
+@@ -281,21 +329,32 @@ def evaluate_on_WordRep(w, max_pairs=1000, solver_kwargs={}):
+         accuracy[cat] = float(np.sum(y_pred == y)) / size
+ 
+     # Add summary results
+-    correct['wikipedia'] = sum(correct[c] for c in categories if c in data.wikipedia_categories)
+-    correct['all'] = sum(correct[c] for c in categories)
+-    correct['wordnet'] = sum(correct[c] for c in categories if c in data.wordnet_categories)
+-
+-    count['wikipedia'] = sum(count[c] for c in categories if c in data.wikipedia_categories)
+-    count['all'] = sum(count[c] for c in categories)
+-    count['wordnet'] = sum(count[c] for c in categories if c in data.wordnet_categories)
+-
+-    accuracy['wikipedia'] = correct['wikipedia'] / count['wikipedia']
+-    accuracy['all'] = correct['all'] / count['all']
+-    accuracy['wordnet'] = correct['wordnet'] / count['wordnet']
+-
+-    return pd.concat([pd.Series(accuracy, name="accuracy"),
+-                      pd.Series(correct, name="correct"),
+-                      pd.Series(count, name="count")], axis=1)
++    correct["wikipedia"] = sum(
++        correct[c] for c in categories if c in data.wikipedia_categories
++    )
++    correct["all"] = sum(correct[c] for c in categories)
++    correct["wordnet"] = sum(
++        correct[c] for c in categories if c in data.wordnet_categories
++    )
++
++    count["wikipedia"] = sum(
++        count[c] for c in categories if c in data.wikipedia_categories
++    )
++    count["all"] = sum(count[c] for c in categories)
++    count["wordnet"] = sum(count[c] for c in categories if c in data.wordnet_categories)
++
++    accuracy["wikipedia"] = correct["wikipedia"] / count["wikipedia"]
++    accuracy["all"] = correct["all"] / count["all"]
++    accuracy["wordnet"] = correct["wordnet"] / count["wordnet"]
++
++    return pd.concat(
++        [
++            pd.Series(accuracy, name="accuracy"),
++            pd.Series(correct, name="correct"),
++            pd.Series(count, name="count"),
++        ],
++        axis=1,
++    )
+ 
+ 
+ def evaluate_similarity(w, X, y):
+@@ -329,13 +388,19 @@ def evaluate_similarity(w, X, y):
+             if query_word not in words:
+                 missing_words += 1
+     if missing_words > 0:
+-        logger.warning("Missing {} words. Will replace them with mean vector".format(missing_words))
+-
++        logger.warning(
++            "Missing {} words. Will replace them with mean vector".format(missing_words)
++        )
+ 
+     mean_vector = np.mean(w.vectors, axis=0, keepdims=True)
+     A = np.vstack(w.get(word, mean_vector) for word in X[:, 0])
+     B = np.vstack(w.get(word, mean_vector) for word in X[:, 1])
+-    scores = np.array([v1.dot(v2.T)/(np.linalg.norm(v1)*np.linalg.norm(v2)) for v1, v2 in zip(A, B)])
++    scores = np.array(
++        [
++            v1.dot(v2.T) / (np.linalg.norm(v1) * np.linalg.norm(v2))
++            for v1, v2 in zip(A, B)
++        ]
++    )
+     return scipy.stats.spearmanr(scores, y).correlation
+ 
+ 
+@@ -357,7 +422,7 @@ def evaluate_on_all(w):
+         w = Embedding.from_dict(w)
+ 
+     # Calculate results on similarity
+-    logger.info("Calculating similarity benchmarks")
++    logger.info("computing similarity benchmarks")
+     similarity_tasks = {
+         "MEN": fetch_MEN(),
+         "WS353": fetch_WS353(),
+@@ -373,33 +438,40 @@ def evaluate_on_all(w):
+ 
+     for name, data in iteritems(similarity_tasks):
+         similarity_results[name] = evaluate_similarity(w, data.X, data.y)
+-        logger.info("Spearman correlation of scores on {} {}".format(name, similarity_results[name]))
++        logger.info(
++            "Spearman correlation of scores on {} {}".format(
++                name, similarity_results[name]
++            )
++        )
+ 
+     # Calculate results on analogy
+-    logger.info("Calculating analogy benchmarks")
+-    analogy_tasks = {
+-        "Google": fetch_google_analogy(),
+-        "MSR": fetch_msr_analogy()
+-    }
++    logger.info("computing analogy benchmarks")
++    analogy_tasks = {"Google": fetch_google_analogy(), "MSR": fetch_msr_analogy()}
+ 
+     analogy_results = {}
+ 
+     for name, data in iteritems(analogy_tasks):
+         analogy_results[name] = evaluate_analogy(w, data.X, data.y)
+-        logger.info("Analogy prediction accuracy on {} {}".format(name, analogy_results[name]))
++        logger.info(
++            "Analogy prediction accuracy on {} {}".format(name, analogy_results[name])
++        )
+ 
+-    analogy_results["SemEval2012_2"] = evaluate_on_semeval_2012_2(w)['all']
+-    logger.info("Analogy prediction accuracy on {} {}".format("SemEval2012", analogy_results["SemEval2012_2"]))
++    analogy_results["SemEval2012_2"] = evaluate_on_semeval_2012_2(w)["all"]
++    logger.info(
++        "Analogy prediction accuracy on {} {}".format(
++            "SemEval2012", analogy_results["SemEval2012_2"]
++        )
++    )
+ 
+     # Calculate results on categorization
+-    logger.info("Calculating categorization benchmarks")
++    logger.info("computing categorization benchmarks")
+     categorization_tasks = {
+         "AP": fetch_AP(),
+         "BLESS": fetch_BLESS(),
+         "Battig": fetch_battig(),
+         "ESSLI_2c": fetch_ESSLI_2c(),
+         "ESSLI_2b": fetch_ESSLI_2b(),
+-        "ESSLI_1a": fetch_ESSLI_1a()
++        "ESSLI_1a": fetch_ESSLI_1a(),
+     }
+ 
+     categorization_results = {}
+@@ -407,7 +479,9 @@ def evaluate_on_all(w):
+     # Calculate results using helper function
+     for name, data in iteritems(categorization_tasks):
+         categorization_results[name] = evaluate_categorization(w, data.X, data.y)
+-        logger.info("Cluster purity on {} {}".format(name, categorization_results[name]))
++        logger.info(
++            "Cluster purity on {} {}".format(name, categorization_results[name])
++        )
+ 
+     # Construct pd table
+     cat = pd.DataFrame([categorization_results])

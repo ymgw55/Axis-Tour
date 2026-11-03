@@ -1,6 +1,6 @@
 // Copyright (c) joisino 2022
 // Released under the MIT license
-// See LICENSE-wordtour for the full license text
+// See third_party_licenses/wordtour-LICENSE for the full license text
 // Modified by ymgw55 in 2024
 
 #include<vector>

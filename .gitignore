@@ -234,3 +234,6 @@ data/
 embeddings/
 output*
 .devcontainer/
+# fetched by scripts/setup_word_embeddings_benchmarks.sh
+/word-embeddings-benchmarks/
+/POLAR/

@@ -97,8 +97,9 @@ tar xvfz LKH-3.0.6.tgz
 ```
 
 ### word-embeddings-benchmarks
-We have modified the repository [word-embeddings-benchmarks](https://github.com/kudkudak/word-embeddings-benchmarks) [5]. To install it, use the following commands:
+We have modified the repository [word-embeddings-benchmarks](https://github.com/kudkudak/word-embeddings-benchmarks) [5]. Our changes are provided as a patch. To install it, use the following commands:
 ```bash
+./scripts/setup_word_embeddings_benchmarks.sh
 cd word-embeddings-benchmarks
 pip install -e .
 cd ..
@@ -174,13 +175,9 @@ python eval_continuity_by_OpenAI_API.py
 #### Calculate POLAR-applied embeddings (if necessary)
 
 ```bash
-git clone https://github.com/Sandipan99/POLAR.git
+./scripts/setup_polar.sh
 ```
-
-Then
-```bash
-cp polar_glove.ipynb POLAR/
-```
+This clones [POLAR](https://github.com/Sandipan99/POLAR) and creates `POLAR/polar_glove.ipynb` by applying our patch to `POLAR/main.ipynb`.
 Run `POLAR/polar_glove.ipynb` to generate embeddings saved under `output/polar_glove_embeddings/` with the filename `${method}_gl_500_StdNrml.bin`.
 
 #### Evaluation
@@ -273,3 +270,9 @@ If you find our code or model useful in your research, please cite our paper:
 - This directory was created by [Hiroaki Yamagiwa](https://ymgw55.github.io/).
 - The code for TICA was created by Yusuke Takase.
 - See [README.Appendix.md](README.Appendix.md) for the experiments in the Appendix.
+
+---
+
+## License
+
+[MIT License](LICENSE). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party code.
