@@ -8,7 +8,7 @@ Instead of recomputing the embeddings, you can access the embeddings used in the
 
 #### Raw embeddings
 - [word2vec (Google Drive)](https://drive.google.com/file/d/16qHLV6iw0XPRZUI4wuDmJfzeVWldKsT-/view?usp=sharing)
-- [BERT (Google Drive)](https://drive.google.com/file/d/16qHLV6iw0XPRZUI4wuDmJfzeVWldKsT-/view?usp=drive_link)
+- [BERT (Google Drive)](https://drive.google.com/file/d/1QwOqJm-iBpwlU_tx62FwaEuEbGsfs8Yl/view?usp=sharing)
 
 Place the downloaded files under the directory `output/raw_embeddings` as shown below:
 ```bash
